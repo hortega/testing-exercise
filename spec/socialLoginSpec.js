@@ -1,36 +1,38 @@
-var webdriver = require('selenium-webdriver');
-var logging = webdriver.logging
-var test = require('selenium-webdriver/testing');
-var Capabilities = webdriver.Capabilities;
-var util = require('util')
-var assert = require('assert');
+let webdriver = require('selenium-webdriver');
+let logging = webdriver.logging
+let test = require('selenium-webdriver/testing');
+let Capabilities = webdriver.Capabilities;
+let util = require('util')
+let assert = require('assert');
 
-var PropertiesReader = require('properties-reader');
-var ManageLoginPage = require('../lib/page-objects/manage-login-page');
-var ManageSocialConnectionsPage = require('../lib/page-objects/manage-social-connections-page');
-var GoogleConsentPage = require('../lib/page-objects/google-consent-page');
-var CallbackPage = require('../lib/page-objects/callback-page');
-var debugAssetsExtractor = require('../lib/debug-assets-extractor');
+let PropertiesReader = require('properties-reader');
+let ManageLoginPage = require('../lib/page-objects/manage-login-page');
+let ManageSocialConnectionsPage = require('../lib/page-objects/manage-social-connections-page');
+let GoogleConsentPage = require('../lib/page-objects/google-consent-page');
+let FacebookLoginPage = require('../lib/page-objects/facebook-login-page');
+let CallbackPage = require('../lib/page-objects/callback-page');
+let debugAssetsExtractor = require('../lib/debug-assets-extractor');
 
 const mochaTimeOut = 40000; //ms
+
+let homeDir = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
+let properties = PropertiesReader(homeDir + '/testing-exercise.properties');
 
 describe('Google login', function() {
 
     let browser;
-    var homeDir = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
-    var properties = PropertiesReader(homeDir + '/testing-exercise.properties');
-    var manageLoginPage;
-    var googleConsentPage;
-    var manageSocialConnectionsPage;
-    var callbackPage;
+    let manageLoginPage;
+    let googleConsentPage;
+    let manageSocialConnectionsPage;
+    let callbackPage;
 
 
 
     test.beforeEach(function(done) {
-        var prefs = new logging.Preferences();
+        let prefs = new logging.Preferences();
         prefs.setLevel(logging.Type.BROWSER, logging.Level.DEBUG);
 
-        var caps = Capabilities.chrome();
+        let caps = Capabilities.chrome();
         caps.setLoggingPrefs(prefs);
         browser = new webdriver.Builder().withCapabilities(caps).build();
 
@@ -60,7 +62,59 @@ describe('Google login', function() {
         manageSocialConnectionsPage.tryGoogle()
 
         googleConsentPage.allow();
-        
+
+        callbackPage.getHeaderTitle().then((title) => {
+            assert.equal(title, 'It Works!', "Expected callback page title: 'It works!', but got " + title);
+            browser.quit().then(done);
+        });
+    });
+});
+
+describe('Facebook login', function() {
+
+    let browser;
+    let manageLoginPage;
+    let googleConsentPage;
+    let manageSocialConnectionsPage;
+    let callbackPage;
+
+
+
+    test.beforeEach(function(done) {
+        let prefs = new logging.Preferences();
+        prefs.setLevel(logging.Type.BROWSER, logging.Level.DEBUG);
+
+        let caps = Capabilities.chrome();
+        caps.setLoggingPrefs(prefs);
+        browser = new webdriver.Builder().withCapabilities(caps).build();
+
+        manageLoginPage = new ManageLoginPage(browser);
+        facebookLoginPage = new FacebookLoginPage(browser);
+        manageSocialConnectionsPage = new ManageSocialConnectionsPage(browser);
+        callbackPage = new CallbackPage(browser);
+
+        done();
+    });
+
+    test.afterEach(function(done) {
+        if (this.currentTest.state === 'failed') {
+            debugAssetsExtractor(browser, this.currentTest.title).then(() => browser.quit().then(done));
+        } else {
+            done();
+        }
+    });
+
+    test.it('log in to Manage Console -> Hit Try button -> Login on Facebook -> Callback page is displayed', function(done) {
+        this.timeout(mochaTimeOut);
+
+        manageLoginPage.visit();
+        manageLoginPage.loginWithGoogle(properties.get("manage.user"), properties.get("manage.password"));
+
+        manageSocialConnectionsPage.visit();
+        manageSocialConnectionsPage.tryFacebook()
+
+        facebookLoginPage.login(properties.get("facebook.user"), properties.get("facebook.password"));
+
         callbackPage.getHeaderTitle().then((title) => {
             assert.equal(title, 'It Works!', "Expected callback page title: 'It works!', but got " + title);
             browser.quit().then(done);
