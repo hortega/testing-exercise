@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node_modules/.bin/jasmine-node spec --autotest"
+    "test": "./node_modules/.bin/mocha-parallel-tests spec --max-parallel 2"
   },
   "author": "",
   "license": "ISC",
