@@ -10,6 +10,8 @@ let ManageLoginPage = require('../lib/page-objects/manage-login-page');
 let ManageSocialConnectionsPage = require('../lib/page-objects/manage-social-connections-page');
 let GoogleConsentPage = require('../lib/page-objects/google-consent-page');
 let FacebookLoginPage = require('../lib/page-objects/facebook-login-page');
+let GithubLoginPage = require('../lib/page-objects/github-login-page');
+let GithubConsentPage = require('../lib/page-objects/github-consent-page');
 let CallbackPage = require('../lib/page-objects/callback-page');
 let debugAssetsExtractor = require('../lib/debug-assets-extractor');
 
@@ -78,8 +80,6 @@ describe('Facebook login', function() {
     let manageSocialConnectionsPage;
     let callbackPage;
 
-
-
     test.beforeEach(function(done) {
         let prefs = new logging.Preferences();
         prefs.setLevel(logging.Type.BROWSER, logging.Level.DEBUG);
@@ -114,6 +114,57 @@ describe('Facebook login', function() {
         manageSocialConnectionsPage.tryFacebook()
 
         facebookLoginPage.login(properties.get("facebook.user"), properties.get("facebook.password"));
+
+        callbackPage.getHeaderTitle().then((title) => {
+            assert.equal(title, 'It Works!', "Expected callback page title: 'It works!', but got " + title);
+            browser.quit().then(done);
+        });
+    });
+});
+
+describe('Github login', function() {
+
+    let browser;
+    let manageLoginPage;
+    let googleConsentPage;
+    let manageSocialConnectionsPage;
+    let callbackPage;
+
+    test.beforeEach(function(done) {
+        let prefs = new logging.Preferences();
+        prefs.setLevel(logging.Type.BROWSER, logging.Level.DEBUG);
+
+        let caps = Capabilities.chrome();
+        caps.setLoggingPrefs(prefs);
+        browser = new webdriver.Builder().withCapabilities(caps).build();
+
+        manageLoginPage = new ManageLoginPage(browser);
+        githubLoginPage = new GithubLoginPage(browser);
+        githubConsentPage = new GithubConsentPage(browser);
+        manageSocialConnectionsPage = new ManageSocialConnectionsPage(browser);
+        callbackPage = new CallbackPage(browser);
+
+        done();
+    });
+
+    test.afterEach(function(done) {
+        if (this.currentTest.state === 'failed') {
+            debugAssetsExtractor(browser, this.currentTest.title).then(() => browser.quit().then(done));
+        } else {
+            done();
+        }
+    });
+
+    test.it('log in to Manage Console -> Hit Try button -> Login on Facebook -> Callback page is displayed', function(done) {
+        this.timeout(mochaTimeOut);
+
+        manageLoginPage.visit();
+        manageLoginPage.loginWithGoogle(properties.get("manage.user"), properties.get("manage.password"));
+
+        manageSocialConnectionsPage.visit();
+        manageSocialConnectionsPage.tryGithub()
+
+        githubLoginPage.login(properties.get("github.user"), properties.get("github.password"));
 
         callbackPage.getHeaderTitle().then((title) => {
             assert.equal(title, 'It Works!', "Expected callback page title: 'It works!', but got " + title);
