@@ -1,0 +1,14 @@
+.env
+
+logs
+*.log
+npm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+build/Release
+
+node_modules
