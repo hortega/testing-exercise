@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/.bin/mocha-parallel-tests spec --max-parallel 2"
+    "test": "./node_modules/.bin/mocha-parallel-tests --compilers js:babel-core/register spec"
   },
   "author": "",
   "license": "ISC",
@@ -18,7 +18,7 @@
     "eslint": "^1.10.3",
     "lodash": "^4.13.1",
     "mocha": "^3.0.2",
-    "mocha-parallel-tests": "^1.2.1",
+    "mocha-parallel-tests": "^1.2.2",
     "properties-reader": "0.0.15",
     "selenium-webdriver": "v3.0.0-beta-2"
   }
