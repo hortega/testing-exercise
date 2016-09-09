@@ -7,9 +7,11 @@ import PropertiesReader from 'properties-reader';
 import ManageLoginPage from '../lib/page-objects/manage-login-page';
 import ManageSocialConnectionsPage from '../lib/page-objects/manage-social-connections-page';
 import GoogleConsentPage from '../lib/page-objects/google-consent-page';
-import FacebookLoginPage from '../lib/page-objects/facebook-login-page';
-import GithubLoginPage from '../lib/page-objects/github-login-page';
-import GithubConsentPage from '../lib/page-objects/github-consent-page';
+import FacebookLoginPage from '../lib/page-objects/facebook/facebook-login-page';
+import FacebookApplicationsPage from '../lib/page-objects/facebook/facebook-applications-page';
+import GithubLoginPage from '../lib/page-objects/github/github-login-page';
+import GithubConsentPage from '../lib/page-objects/github/github-consent-page';
+import GithubApplicationsPage from '../lib/page-objects/github/github-applications-page';
 import CallbackPage from '../lib/page-objects/callback-page';
 import extractDebugAssets from '../lib/debug-assets-extractor';
 import ChromeBrowserFactory from '../lib/chrome-browser-factory';
@@ -24,8 +26,10 @@ let googleConsentPage;
 let manageSocialConnectionsPage;
 let callbackPage;
 let facebookLoginPage;
+let facebookApplicationsPage;
 let githubLoginPage;
 let githubConsentPage;
+let githubApplicationsPage;
 
 test.beforeEach(function(done) {
     browser = ChromeBrowserFactory.build();
@@ -35,8 +39,10 @@ test.beforeEach(function(done) {
     manageSocialConnectionsPage = new ManageSocialConnectionsPage(browser);
     callbackPage = new CallbackPage(browser);
     facebookLoginPage = new FacebookLoginPage(browser);
+    facebookApplicationsPage = new FacebookApplicationsPage(browser);
     githubLoginPage = new GithubLoginPage(browser);
     githubConsentPage = new GithubConsentPage(browser);
+    githubApplicationsPage = new GithubApplicationsPage(browser);
 
     done();
 });
@@ -49,10 +55,24 @@ test.afterEach(function(done) {
     }
 });
 
+function switchToNewTab() {
+    var d = webdriver.promise.defer();
+    browser.sleep(1000);
+    browser.getAllWindowHandles().then((handles) => {
+        var newTab = handles[1];
+        browser.switchTo().window(newTab).then(() => {
+            d.fulfill();
+        });
+
+    });
+
+    return d.promise;
+}
+
 
 describe('Google login', function() {
 
-    test.it('should log in to Manage Console -> Hit Try button -> Hit Allow in Google consent page -> Callback page is displayed', function(done) {
+    test.ignore('should log in to Manage Console -> Hit Try button -> Hit Allow in Google consent page -> Callback page is displayed', function(done) {
         this.timeout(mochaTimeOut);
 
         manageLoginPage.visit();
@@ -72,15 +92,16 @@ describe('Google login', function() {
 
 describe('Facebook login', function() {
 
-    test.ignore('should log in to Manage Console -> Hit Try button -> Login on Facebook -> Callback page is displayed', function(done) {
+    test.it('should log in to Manage Console -> Hit Try button -> Login on Facebook -> Callback page is displayed', function(done) {
         this.timeout(mochaTimeOut);
 
         manageLoginPage.visit();
         manageLoginPage.loginWithGoogle(properties.get("manage.user"), properties.get("manage.password"));
 
         manageSocialConnectionsPage.visit();
-        manageSocialConnectionsPage.tryFacebook()
+        manageSocialConnectionsPage.tryFacebook();
 
+        switchToNewTab();
         facebookLoginPage.login(properties.get("facebook.user"), properties.get("facebook.password"));
 
         callbackPage.getHeaderTitle().then((title) => {
@@ -92,16 +113,22 @@ describe('Facebook login', function() {
 
 describe('Github login', function() {
 
-    test.ignore('should log in to Manage Console -> Hit Try button -> Login on Facebook -> Callback page is displayed', function(done) {
+    test.ignore('should log in to Manage Console -> Hit Try button -> Login on Github -> Callback page is displayed', function(done) {
         this.timeout(mochaTimeOut);
+
+        githubLoginPage.visit();
+        githubLoginPage.login(properties.get("github.user"), properties.get("github.password"));
+        githubApplicationsPage.visit();
+        githubApplicationsPage.revokeApplication("testing-exercise");
 
         manageLoginPage.visit();
         manageLoginPage.loginWithGoogle(properties.get("manage.user"), properties.get("manage.password"));
 
         manageSocialConnectionsPage.visit();
-        manageSocialConnectionsPage.tryGithub()
+        manageSocialConnectionsPage.tryGithub();
 
-        githubLoginPage.login(properties.get("github.user"), properties.get("github.password"));
+        switchToNewTab();
+        githubConsentPage.consent();
 
         callbackPage.getHeaderTitle().then((title) => {
             assert.equal(title, 'It Works!', "Expected callback page title: 'It works!', but got " + title);
