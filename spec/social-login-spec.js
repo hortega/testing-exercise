@@ -72,7 +72,7 @@ function switchToNewTab() {
 
 describe('Google login', function() {
 
-    test.ignore('should log in to Manage Console -> Hit Try button -> Hit Allow in Google consent page -> Callback page is displayed', function(done) {
+    test.it('should log in to Manage Console -> Hit Try button -> Hit Allow in Google consent page -> Callback page is displayed', function(done) {
         this.timeout(mochaTimeOut);
 
         manageLoginPage.visit();
@@ -113,7 +113,7 @@ describe('Facebook login', function() {
 
 describe('Github login', function() {
 
-    test.ignore('should log in to Manage Console -> Hit Try button -> Login on Github -> Callback page is displayed', function(done) {
+    test.it('should log in to Manage Console -> Hit Try button -> Login on Github -> Callback page is displayed', function(done) {
         this.timeout(mochaTimeOut);
 
         githubLoginPage.visit();
