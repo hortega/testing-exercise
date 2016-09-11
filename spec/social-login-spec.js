@@ -4,9 +4,10 @@ import test from 'selenium-webdriver/testing';
 import util from 'util'
 
 import PropertiesReader from 'properties-reader';
-import ManageLoginPage from '../lib/page-objects/manage-login-page';
+
 import ManageSocialConnectionsPage from '../lib/page-objects/manage-social-connections-page';
-import GoogleConsentPage from '../lib/page-objects/google-consent-page';
+import ManageLoginPage from '../lib/page-objects/manage-login-page';
+import GoogleConsentPage from '../lib/page-objects/google/google-consent-page';
 import FacebookLoginPage from '../lib/page-objects/facebook/facebook-login-page';
 import FacebookApplicationsPage from '../lib/page-objects/facebook/facebook-applications-page';
 import GithubLoginPage from '../lib/page-objects/github/github-login-page';
@@ -18,8 +19,11 @@ import ChromeBrowserFactory from '../lib/chrome-browser-factory';
 
 const mochaTimeOut = 40000; //ms
 
-let homeDir = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
-let properties = PropertiesReader(homeDir + '/testing-exercise.properties');
+let credentials = {
+    user: process.env.user,
+    password: process.env.pass
+}
+
 let browser;
 let manageLoginPage;
 let googleConsentPage;
@@ -76,7 +80,7 @@ describe('Google login', function() {
         this.timeout(mochaTimeOut);
 
         manageLoginPage.visit();
-        manageLoginPage.loginWithGoogle(properties.get("manage.user"), properties.get("manage.password"));
+        manageLoginPage.loginWithGoogle(credentials);
 
         manageSocialConnectionsPage.visit();
         manageSocialConnectionsPage.tryGoogle()
@@ -96,13 +100,13 @@ describe('Facebook login', function() {
         this.timeout(mochaTimeOut);
 
         manageLoginPage.visit();
-        manageLoginPage.loginWithGoogle(properties.get("manage.user"), properties.get("manage.password"));
+        manageLoginPage.loginWithGoogle(credentials);
 
         manageSocialConnectionsPage.visit();
         manageSocialConnectionsPage.tryFacebook();
 
         switchToNewTab();
-        facebookLoginPage.login(properties.get("facebook.user"), properties.get("facebook.password"));
+        facebookLoginPage.login(credentials);
 
         callbackPage.getHeaderTitle().then((title) => {
             assert.equal(title, 'It Works!', "Expected callback page title: 'It works!', but got " + title);
@@ -117,12 +121,12 @@ describe('Github login', function() {
         this.timeout(mochaTimeOut);
 
         githubLoginPage.visit();
-        githubLoginPage.login(properties.get("github.user"), properties.get("github.password"));
+        githubLoginPage.login(credentials);
         githubApplicationsPage.visit();
-        githubApplicationsPage.revokeApplication("testing-exercise");
+        githubApplicationsPage.revokeApplication("test-exercise");
 
         manageLoginPage.visit();
-        manageLoginPage.loginWithGoogle(properties.get("manage.user"), properties.get("manage.password"));
+        manageLoginPage.loginWithGoogle(credentials);
 
         manageSocialConnectionsPage.visit();
         manageSocialConnectionsPage.tryGithub();
