@@ -58,18 +58,22 @@ test.afterEach(function(done) {
     }
 });
 
+var loginToManageConsole = function() {
+    var page = new ManageLoginPage(browser);
+    page.visit();
+    page = page.clickLoginWithGoogle();
+    page.login();
+}
+
 
 describe('Google login', function() {
 
-    test.it('should log in to Manage Console -> Hit Try button -> Hit Allow in Google consent page -> Callback page is displayed', function(done) {
+    test.ignore('should log in to Manage Console -> Hit Try button -> Hit Allow in Google consent page -> Callback page is displayed', function(done) {
         this.timeout(mochaTimeOut);
 
-        var page = new ManageLoginPage(browser);
-        page.visit();
-        page = page.clickLoginWithGoogle();
-        page.login();
+        loginToManageConsole();
 
-        page = new ManageSocialConnectionsPage(browser);
+        var page = new ManageSocialConnectionsPage(browser);
         page.visit();
         page = page.tryGoogle()
 
@@ -85,21 +89,22 @@ describe('Google login', function() {
 
 describe('Facebook login', function() {
 
-    test.ignore('should log in to Manage Console -> Hit Try button -> Login on Facebook -> Callback page is displayed', function(done) {
+    test.it('should log in to Manage Console -> Hit Try button -> Login on Facebook -> Callback page is displayed', function(done) {
         this.timeout(mochaTimeOut);
+
         facebookGraphClient.revoke()
 
-        manageLoginPage.visit();
-        manageLoginPage.loginWithGoogle();
+        loginToManageConsole();
 
-        manageSocialConnectionsPage.visit();
-        manageSocialConnectionsPage.tryFacebook();
+        var page = new ManageSocialConnectionsPage(browser);
+        page.visit();
+        page = page.tryFacebook()
 
-        switchToNewTab();
-        facebookLoginPage.login();
-        facebookConsentPage.consent();
+        page.switchToNewTab();
+        page = page.login();
+        page = page.consent();
 
-        callbackPage.getHeaderTitle().then((title) => {
+        page.getHeaderTitle().then((title) => {
             assert.equal(title, 'It Works!', "Expected callback page title: 'It works!', but got " + title);
             browser.quit().then(done);
         });
