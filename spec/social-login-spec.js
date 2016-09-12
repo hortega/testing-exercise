@@ -3,26 +3,22 @@ import webdriver from 'selenium-webdriver';
 import test from 'selenium-webdriver/testing';
 import util from 'util'
 
-import PropertiesReader from 'properties-reader';
 
 import ManageSocialConnectionsPage from '../lib/page-objects/manage-social-connections-page';
 import ManageLoginPage from '../lib/page-objects/manage-login-page';
 import GoogleConsentPage from '../lib/page-objects/google/google-consent-page';
 import FacebookLoginPage from '../lib/page-objects/facebook/facebook-login-page';
 import FacebookApplicationsPage from '../lib/page-objects/facebook/facebook-applications-page';
+import FacebookConsentPage from '../lib/page-objects/facebook/facebook-consent-page';
 import GithubLoginPage from '../lib/page-objects/github/github-login-page';
 import GithubConsentPage from '../lib/page-objects/github/github-consent-page';
 import GithubApplicationsPage from '../lib/page-objects/github/github-applications-page';
 import CallbackPage from '../lib/page-objects/callback-page';
 import extractDebugAssets from '../lib/debug-assets-extractor';
 import ChromeBrowserFactory from '../lib/chrome-browser-factory';
+import FacebookGraphClient from '../lib/facebook-graph-client';
 
 const mochaTimeOut = 40000; //ms
-
-let credentials = {
-    user: process.env.user,
-    password: process.env.pass
-}
 
 let browser;
 let manageLoginPage;
@@ -31,9 +27,11 @@ let manageSocialConnectionsPage;
 let callbackPage;
 let facebookLoginPage;
 let facebookApplicationsPage;
+let facebookConsentPage;
 let githubLoginPage;
 let githubConsentPage;
 let githubApplicationsPage;
+let facebookGraphClient;
 
 test.beforeEach(function(done) {
     browser = ChromeBrowserFactory.build();
@@ -44,9 +42,11 @@ test.beforeEach(function(done) {
     callbackPage = new CallbackPage(browser);
     facebookLoginPage = new FacebookLoginPage(browser);
     facebookApplicationsPage = new FacebookApplicationsPage(browser);
+    facebookConsentPage = new FacebookConsentPage(browser);
     githubLoginPage = new GithubLoginPage(browser);
     githubConsentPage = new GithubConsentPage(browser);
     githubApplicationsPage = new GithubApplicationsPage(browser);
+    facebookGraphClient = new FacebookGraphClient();
 
     done();
 });
@@ -80,7 +80,7 @@ describe('Google login', function() {
         this.timeout(mochaTimeOut);
 
         manageLoginPage.visit();
-        manageLoginPage.loginWithGoogle(credentials);
+        manageLoginPage.loginWithGoogle();
 
         manageSocialConnectionsPage.visit();
         manageSocialConnectionsPage.tryGoogle()
@@ -98,15 +98,17 @@ describe('Facebook login', function() {
 
     test.it('should log in to Manage Console -> Hit Try button -> Login on Facebook -> Callback page is displayed', function(done) {
         this.timeout(mochaTimeOut);
+        facebookGraphClient.revoke()
 
         manageLoginPage.visit();
-        manageLoginPage.loginWithGoogle(credentials);
+        manageLoginPage.loginWithGoogle();
 
         manageSocialConnectionsPage.visit();
         manageSocialConnectionsPage.tryFacebook();
 
         switchToNewTab();
-        facebookLoginPage.login(credentials);
+        facebookLoginPage.login();
+        facebookConsentPage.consent();
 
         callbackPage.getHeaderTitle().then((title) => {
             assert.equal(title, 'It Works!', "Expected callback page title: 'It works!', but got " + title);
@@ -117,16 +119,16 @@ describe('Facebook login', function() {
 
 describe('Github login', function() {
 
-    test.ignore('should log in to Manage Console -> Hit Try button -> Login on Github -> Callback page is displayed', function(done) {
+    test.it('should log in to Manage Console -> Hit Try button -> Login on Github -> Callback page is displayed', function(done) {
         this.timeout(mochaTimeOut);
 
         githubLoginPage.visit();
-        githubLoginPage.login(credentials);
+        githubLoginPage.login();
         githubApplicationsPage.visit();
         githubApplicationsPage.revokeApplication("test-exercise");
 
         manageLoginPage.visit();
-        manageLoginPage.loginWithGoogle(credentials);
+        manageLoginPage.loginWithGoogle();
 
         manageSocialConnectionsPage.visit();
         manageSocialConnectionsPage.tryGithub();
