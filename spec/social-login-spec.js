@@ -21,32 +21,9 @@ import FacebookGraphClient from '../lib/facebook-graph-client';
 const mochaTimeOut = 40000; //ms
 
 let browser;
-let manageLoginPage;
-let googleConsentPage;
-let manageSocialConnectionsPage;
-let callbackPage;
-let facebookLoginPage;
-let facebookApplicationsPage;
-let facebookConsentPage;
-let githubLoginPage;
-let githubConsentPage;
-let githubApplicationsPage;
-let facebookGraphClient;
 
 test.beforeEach(function(done) {
     browser = ChromeBrowserFactory.build();
-
-    googleConsentPage = new GoogleConsentPage(browser);
-    manageSocialConnectionsPage = new ManageSocialConnectionsPage(browser);
-    callbackPage = new CallbackPage(browser);
-    facebookLoginPage = new FacebookLoginPage(browser);
-    facebookApplicationsPage = new FacebookApplicationsPage(browser);
-    facebookConsentPage = new FacebookConsentPage(browser);
-    githubLoginPage = new GithubLoginPage(browser);
-    githubConsentPage = new GithubConsentPage(browser);
-    githubApplicationsPage = new GithubApplicationsPage(browser);
-    facebookGraphClient = new FacebookGraphClient();
-
     done();
 });
 
@@ -65,10 +42,17 @@ var loginToManageConsole = function() {
     page.login();
 }
 
+var assertCallbackPage = function(page, done) {
+    page.getHeaderTitle().then((title) => {
+        assert.equal(title, 'It Works!', "Expected callback page title: 'It works!', but got " + title);
+        browser.quit().then(done);
+    });
+}
+
 
 describe('Google login', function() {
 
-    test.ignore('should log in to Manage Console -> Hit Try button -> Hit Allow in Google consent page -> Callback page is displayed', function(done) {
+    test.it('should log in to Manage Console -> Hit Try button -> Hit Allow in Google consent page -> Callback page is displayed', function(done) {
         this.timeout(mochaTimeOut);
 
         loginToManageConsole();
@@ -80,10 +64,7 @@ describe('Google login', function() {
         page.switchToNewTab();
         page = page.allow();
 
-        page.getHeaderTitle().then((title) => {
-            assert.equal(title, 'It Works!', "Expected callback page title: 'It works!', but got " + title);
-            browser.quit().then(done);
-        });
+        assertCallbackPage(page, done);
     });
 });
 
@@ -92,6 +73,7 @@ describe('Facebook login', function() {
     test.it('should log in to Manage Console -> Hit Try button -> Login on Facebook -> Callback page is displayed', function(done) {
         this.timeout(mochaTimeOut);
 
+        let facebookGraphClient = new FacebookGraphClient();
         facebookGraphClient.revoke()
 
         loginToManageConsole();
@@ -104,35 +86,32 @@ describe('Facebook login', function() {
         page = page.login();
         page = page.consent();
 
-        page.getHeaderTitle().then((title) => {
-            assert.equal(title, 'It Works!', "Expected callback page title: 'It works!', but got " + title);
-            browser.quit().then(done);
-        });
+        assertCallbackPage(page, done);
     });
 });
 
 describe('Github login', function() {
 
-    test.ignore('should log in to Manage Console -> Hit Try button -> Login on Github -> Callback page is displayed', function(done) {
+    test.it('should log in to Manage Console -> Hit Try button -> Login on Github -> Callback page is displayed', function(done) {
         this.timeout(mochaTimeOut);
 
-        githubLoginPage.visit();
-        githubLoginPage.login();
-        githubApplicationsPage.visit();
-        githubApplicationsPage.revokeApplication("test-exercise");
+        var page = new GithubLoginPage(browser);
+        page.visit();
+        page = page.login();
 
-        manageLoginPage.visit();
-        manageLoginPage.loginWithGoogle();
+        page = new GithubApplicationsPage(browser);
+        page.visit();
+        page.revokeApplication("test-exercise");
 
-        manageSocialConnectionsPage.visit();
-        manageSocialConnectionsPage.tryGithub();
+        loginToManageConsole();
 
-        switchToNewTab();
-        githubConsentPage.consent();
+        var page = new ManageSocialConnectionsPage(browser);
+        page.visit();
+        page = page.tryGithub()
 
-        callbackPage.getHeaderTitle().then((title) => {
-            assert.equal(title, 'It Works!', "Expected callback page title: 'It works!', but got " + title);
-            browser.quit().then(done);
-        });
+        page.switchToNewTab();
+        page = page.consent();
+
+        assertCallbackPage(page, done);
     });
 });
