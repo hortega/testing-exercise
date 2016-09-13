@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/hortega/testing-exercise.svg?branch=master)](https://travis-ci.org/hortega/testing-exercise)
 ## Description
 
 UI test suite for social login Auth0 feature using WebdriverJS (selenium-webdriver). 
